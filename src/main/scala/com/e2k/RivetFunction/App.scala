@@ -31,11 +31,9 @@ object App {
     	waveData.channels=audioInputStream.getFormat().getChannels();
     	waveData.endian=audioInputStream.getFormat().isBigEndian();
     	
-    	println(waveData.sampleSizeInBits)
-    	println(waveData.bytesPerFrame)
-    	println(waveData.endian)
+    	println ("sampleSizeInBits "+waveData.sampleSizeInBits)
     	
-    	grabWavBlock(audioInputStream)
+     	grabWavBlock(audioInputStream)
     	
     } catch 	{
       case e => waveData.errorReason=e.toString()
@@ -44,24 +42,25 @@ object App {
     return waveData  
   }
   
-  // Read in 1024 bytes of a wav file
+  // Read in 2048 bytes of a wav file
   def grabWavBlock (audioStream : AudioInputStream) : Array[Integer]=	{
     val initialBlock=new Array[Integer](1024)
-    val inBlock=new Array[Byte](1024)
+    val inBlock=new Array[Byte](2048)
     val count=audioStream.read(inBlock)
-    
-    
-    
-    println (inBlock(0))
-    println (inBlock(1))
-    println (inBlock(2))
-    println (inBlock(3))
-    println (inBlock(4))
-    println (inBlock(5))
-    println (inBlock(6))
-    println (inBlock(7))
-    
+    // Have a loop convert the byte array into an int array
+    var i=0
+    var a=0
+    while (i<count)	{
+      initialBlock(a)=LEconv(inBlock(i),inBlock(i+1))
+      a=a+1
+      i=i+2
+    }
     return initialBlock
+  }
+  
+  // Convert from being little endian
+  def LEconv (a : Byte , b : Byte) : Integer= 	{
+    a&0xFF|b<<8;
   }
   
 
