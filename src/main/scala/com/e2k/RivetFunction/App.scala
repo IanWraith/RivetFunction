@@ -1,5 +1,6 @@
 package com.e2k.RivetFunction
 
+import scala.collection.mutable.ArrayBuffer 
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.AudioInputStream
 import java.io.File
@@ -11,17 +12,22 @@ object App {
     // args[0] - System type
     // args[1] - File name
      
-    val waveData=readWavFile("C:\\temp\\test.wav")
-    if (waveData.errorState==true) println ("Error :" + waveData.errorReason)
+    val ret=readWavFile("C:\\temp\\test.wav")
+    val waveData=ret._2
+    if (ret._1==true) println ("Error :" + ret._3)
     else println ("OK !")
     
     
   }
   
   // Read in a WAV file and return a WaveData class
-  def readWavFile (fileName : String ): WaveData= {
+  def readWavFile (fileName : String ): Tuple3 [Boolean,WaveData,String]= {
     val waveData=new WaveData
-    
+    var rawData:ArrayBuffer[Int]=new ArrayBuffer() 
+    var wavCom=false;
+    var errorState=false;
+    var errorReason="OK"
+    var a=0;
     try	{
     	val wavFile=new File(fileName)
     	val audioInputStream=AudioSystem.getAudioInputStream(wavFile)  
@@ -30,32 +36,37 @@ object App {
     	waveData.sampleSizeInBits=audioInputStream.getFormat().getSampleSizeInBits();
     	waveData.channels=audioInputStream.getFormat().getChannels();
     	waveData.endian=audioInputStream.getFormat().isBigEndian();
-    	
-    	println ("sampleSizeInBits "+waveData.sampleSizeInBits)
-    	
-     	grabWavBlock(audioInputStream)
-    	
+    	// Keep grabbing 1024 blocks of WAV file until it has all been loaded
+    	while (wavCom==false)	{
+    		val ret=grabWavBlock(audioInputStream)
+    		// Transfer the Int array into a mutuable array buffer 
+    		for (a<-0 until ret._1) rawData += ret._2(a)
+    		// If less than 1024 Ints are returned this was the last block
+    		if (ret._1<1024) wavCom=true
+    	}
+        // Transfer the completed array buffer into the WaveData objects list
+    	waveData.rawList=rawData.toList	
     } catch 	{
-      case e => waveData.errorReason=e.toString()
-      waveData.errorState=true
+      case e => errorReason=e.toString()
+      errorState=true
     }
-    return waveData  
+    (errorState,waveData,errorReason)  
   }
   
   // Read in 2048 bytes of a wav file
-  def grabWavBlock (audioStream : AudioInputStream) : Array[Integer]=	{
+  // Returns a tuple consisting of the block count and an Int array
+  def grabWavBlock (audioStream : AudioInputStream) : Tuple2 [Int,Array[Integer]]= {
     val initialBlock=new Array[Integer](1024)
     val inBlock=new Array[Byte](2048)
     val count=audioStream.read(inBlock)
     // Have a loop convert the byte array into an int array
     var i=0
     var a=0
-    while (i<count)	{
+    for (a<-0 until 1024)	{
       initialBlock(a)=LEconv(inBlock(i),inBlock(i+1))
-      a=a+1
       i=i+2
     }
-    return initialBlock
+    (a,initialBlock)
   }
   
   // Convert from being little endian
