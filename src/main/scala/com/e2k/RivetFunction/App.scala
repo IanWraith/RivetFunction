@@ -11,11 +11,20 @@ object App {
     
     // args[0] - System type
     // args[1] - File name
-     
-    val ret=readWavFile("C:\\temp\\test.wav")
+    
+    var displayLines=List[String]() 
+    val ret=readWavFile("C:\\temp\\xpa.wav")
     val waveData=ret._2
     if (ret._1==true) println ("Error :" + ret._3)
+    // XPA
+    val system="XPA"
+    if (system=="XPA")	{
+      val xpa=new XPA
+      displayLines=xpa.decode(ret._2)
+      }
     
+    // Display the resulting decode info contained in a List
+    displayLines.foreach (displayLines => println(displayLines)) 
     
   }
   
