@@ -15,7 +15,6 @@ object App {
     val ret=readWavFile("C:\\temp\\test.wav")
     val waveData=ret._2
     if (ret._1==true) println ("Error :" + ret._3)
-    else println ("OK !")
     
     
   }
@@ -55,7 +54,17 @@ object App {
   
   // Read in 2048 bytes of a wav file
   // Returns a tuple consisting of the block count and an Int array
-  def grabWavBlock (audioStream : AudioInputStream) : Tuple2 [Int,Array[Integer]]= {
+  def grabWavBlock (audioStream : AudioInputStream ) : Tuple2 [Int,Array[Integer]]= {
+    // Decide how to handle the WAV data
+    // 16 bit LE
+    if ((audioStream.getFormat().isBigEndian()==false)&&(audioStream.getFormat().getSampleSizeInBits()==16)) return grabWavBlock16LE (audioStream) 
+    // 8 bit 
+    else if (audioStream.getFormat().getSampleSizeInBits()==8) return grabWavBlock8B(audioStream)
+    else return (0,Array(0,0))
+  }
+  
+  // Handle 16 bit LE WAV data
+  def grabWavBlock16LE (audioStream : AudioInputStream) : Tuple2 [Int,Array[Integer]]= {
     val initialBlock=new Array[Integer](1024)
     val inBlock=new Array[Byte](2048)
     val count=audioStream.read(inBlock)
@@ -66,12 +75,23 @@ object App {
       initialBlock(a)=LEconv(inBlock(i),inBlock(i+1))
       i=i+2
     }
-    (a,initialBlock)
+    ((count/2),initialBlock)
   }
   
   // Convert from being little endian
   def LEconv (a : Byte , b : Byte) : Integer= 	{
     a&0xFF|b<<8;
+  }
+  
+  // Handle 8 bit WAV files
+  def grabWavBlock8B (audioStream : AudioInputStream) : Tuple2 [Int,Array[Integer]]= {
+    val initialBlock=new Array[Integer](1024)
+    val inBlock=new Array[Byte](1024)
+    val count=audioStream.read(inBlock)
+    // Have a loop convert the byte array into an int array
+    var a=0
+    for (a<-0 until 1024) initialBlock(a)=inBlock(a)
+    (count,initialBlock)
   }
   
 
