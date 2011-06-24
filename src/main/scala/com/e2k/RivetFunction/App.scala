@@ -13,7 +13,7 @@ object App {
     // args[1] - File name
     
     var displayLines=List[String]() 
-    val ret=readWavFile("C:\\temp\\xpa.wav")
+    val ret=readWavFile("C:\\temp\\xpa_short.wav")
     val waveData=ret._2
     if (ret._1==true) println ("Error :" + ret._3)
     // XPA
@@ -22,6 +22,8 @@ object App {
       val xpa=new XPA
       displayLines=xpa.decode(ret._2)
       }
+    
+    println("Done Processing !")
     
     // Display the resulting decode info contained in a List
     displayLines.foreach (displayLines => println(displayLines)) 
@@ -53,7 +55,7 @@ object App {
     		if (ret._1<1024) wavCom=true
     	}
         // Transfer the completed array buffer into the WaveData objects list
-    	waveData.rawList=rawData.toList	
+    	waveData.rawList=rawData.clone
     } catch 	{
       case e => errorReason=e.toString()
       errorState=true
