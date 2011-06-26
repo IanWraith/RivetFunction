@@ -24,21 +24,45 @@ class XPA {
     (displayArray.toList)
   }
   
-  def peakDetect (waveData : WaveData) : ArrayBuffer[Int]=	{
-    var peakArray:ArrayBuffer[Int]=new ArrayBuffer() 
+  // Measure the frequency of a segment returning the frequency in Hertz and a quality indicator
+  def measureSegmentFrequency (waveData : WaveData , startPoint : Int ,len : Int): Tuple2 [Int,Int]=	{
+	var peakArray:ArrayBuffer[Int]=new ArrayBuffer() 
     var lastPeak=0
-    var b=1
-    
-    println(waveData.rawList.length)
-    
-    while (b<waveData.rawList.length-3)	{
+    var b=startPoint+1
+    // Find the distances between the peaks in the selected segment    
+    while (b<(startPoint+len))	{
       if ((waveData.rawList(b)>waveData.rawList(b-1))&&(waveData.rawList(b)>waveData.rawList(b+1)))	{
         peakArray+=(b-lastPeak)
         lastPeak=b
       }
        b=b+1
     }
-    (peakArray)
+   (measureFrequency(peakArray,waveData.sampleRate)) 
   }
+  
+  // Finds the mode value in the peakArray
+  def measureFrequency (peakArray:ArrayBuffer[Int],sampleFreq : Double): Tuple2 [Int,Int]=	{
+    // Find the mode value of the peakArray ArrayBuffer
+    var modal = 0;
+    var mfreq = 0;
+    var i=0;
+    var j=0;
+    while(i<peakArray.length) {
+        var freq = 0;
+        while(j<peakArray.length) {
+            if (j == i ) freq=freq+1
+            j=j+1
+        }
+        if( freq > mfreq ) {
+            modal = i;
+            mfreq = freq;
+    }
+    i=i+1
+    }
+    val freq=getFrequency(modal:Int,sampleFreq:Double)
+    (freq,mfreq)
+  }
+  
+  
 
 }
