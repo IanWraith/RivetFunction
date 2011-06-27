@@ -7,19 +7,18 @@ class XPA {
   
   def decode (waveData : WaveData) : List[String]=	{
     var displayArray:ArrayBuffer[String]=new ArrayBuffer() 
-    var zcPoints:ArrayBuffer[Int]=new ArrayBuffer() 
     
-    zcPoints=peakDetect(waveData)
-    var tline=new StringBuilder("")
+    measureSegmentFrequency(waveData,100,200)
+    //var tline=new StringBuilder("")
     
-    var a=0
-    while (a<zcPoints.length)	{
-      tline.append(zcPoints(a))
-      tline.append(" ")
-      a=a+1
-      if (a%50==0) tline.append("\n")
-    }
-    displayArray+=tline.toString()
+    //var a=0
+    //while (a<zcPoints.length)	{
+      //tline.append(zcPoints(a))
+      //tline.append(" ")
+      //a=a+1
+      //if (a%50==0) tline.append("\n")
+    //}
+    //displayArray+=tline.toString()
     
     (displayArray.toList)
   }
@@ -43,26 +42,33 @@ class XPA {
   // Finds the mode value in the peakArray
   def measureFrequency (peakArray:ArrayBuffer[Int],sampleFreq : Double): Tuple2 [Int,Int]=	{
     // Find the mode value of the peakArray ArrayBuffer
-    var modal = 0;
-    var mfreq = 0;
-    var i=0;
-    var j=0;
+    var modal=0
+    var mfreq=0.0
+    var i=1
     while(i<peakArray.length) {
-        var freq = 0;
+        var freq=0;
+        var j=1
         while(j<peakArray.length) {
-            if (j == i ) freq=freq+1
+            if (peakArray(j)==peakArray(i)) freq=freq+1
             j=j+1
         }
-        if( freq > mfreq ) {
-            modal = i;
-            mfreq = freq;
-    }
+        if(freq>mfreq ) {
+            modal=peakArray(i)
+            mfreq=freq
+        	}       
     i=i+1
     }
-    val freq=getFrequency(modal:Int,sampleFreq:Double)
-    (freq,mfreq)
+    mfreq=(mfreq/peakArray.length)*100.0
+    val afreq=getFrequency(modal,sampleFreq)
+    (afreq,mfreq.toInt)
   }
   
+  // Convert the modal distance between peaks into a frequency measurement
+  def getFrequency (modal : Int , sampleFreq : Double) : Int={
+    val dmodal : Double=modal
+    val r=1.0/((1.0/sampleFreq)*dmodal)
+    (r.toInt)
+  }
   
 
 }
