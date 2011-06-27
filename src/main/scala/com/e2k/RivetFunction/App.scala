@@ -22,12 +22,11 @@ object App {
       val xpa=new XPA
       displayLines=xpa.decode(ret._2)
       }
-    
-    println("Done Processing !")
-    
+   
     // Display the resulting decode info contained in a List
     displayLines.foreach (displayLines => println(displayLines)) 
-    
+   
+    println("Done Processing !")
   }
   
   // Read in a WAV file and return a WaveData class
