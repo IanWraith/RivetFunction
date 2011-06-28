@@ -77,14 +77,12 @@ class XPA {
   }
   
   // Convert the modal distance between peaks into a frequency measurement
-  def getFrequency (modal : Int,sampleFreq : Double) : Int={
-    val dmodal : Double=modal
+  def getFrequency (dmodal : Double,sampleFreq : Double) : Int={
     ((1.0/((1.0/sampleFreq)*dmodal)).toInt)
   }
   
   // Return the number of samples per baud
-  def samplesPerSymbol (baud : Int,sampleFreq : Double) : Int={
-    val dbaud=baud
+  def samplesPerSymbol (dbaud : Double,sampleFreq : Double) : Int={
     (sampleFreq/dbaud).toInt
   }
   
@@ -98,9 +96,11 @@ class XPA {
       val ret=measureSegmentFrequency(waveData,start,samplesPerSym)
       if (ret._2>goodSymbol)	{
         // Low
-        if ((ret._1>(520-errorAllowance))&&(ret._1<(520+errorAllowance))) return (start,(ret._1-520),"Low Start Tone Found")
+        val low=toneTest(ret._1,520,errorAllowance)
+        if (low._1==true) return (start,(low._2),"Low Start Tone Found")
         // High
-        if ((ret._1>(1280-errorAllowance))&&(ret._1<(1280+errorAllowance))) return (start,(ret._1-1280),"High Start Tone Found")      
+        val high=toneTest(ret._1,1280,errorAllowance)
+        if (high._1==true) return (start,(high._2),"High Start Tone Found")
       }
       start=start+10
     }
@@ -108,5 +108,10 @@ class XPA {
     (-1,-1,"Error ! No Start tone found.")
   }
   
+  // Test for a specific tone
+  def toneTest (freq : Int,tone : Int,errorAllow : Int) : Tuple2[Boolean,Int] =	{
+    if ((freq>(tone-errorAllow))&&(freq<(tone+errorAllow))) return (true,(freq-tone))
+     else return (false,0)
+  }
 
 }
