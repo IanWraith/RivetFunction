@@ -7,11 +7,13 @@ class XPA {
   
   def decode (waveData : WaveData) : List[String]=	{
     var displayArray:ArrayBuffer[String]=new ArrayBuffer() 
-    waveData.samplesPerSymbol=samplesPerSymbol(20,waveData.sampleRate)
-    val dataEnd=waveData.rawList.length-waveData.samplesPerSymbol
+    // Set the samples per symbol
+    // XPA is 20 baud
+    val samplesPerBaud=samplesPerSymbol(20,waveData.sampleRate)
+    val dataEnd=waveData.rawList.length-samplesPerBaud
     displayArray+="XPA Decode"
     // Hunt for a start tone
-    val start=startHunt(waveData,dataEnd)
+    val start=startHunt(waveData,dataEnd,samplesPerBaud)
     // No start tone found
     if (start._1== -1)	{
       displayArray+=start._3
@@ -20,14 +22,14 @@ class XPA {
     displayArray+=start._3
     // Set the correction factor
     waveData.correctionFactor=start._2
-    // Set the samples per symbol
-    
-    
+
     var tline=new StringBuilder("")
     tline.append("Error correction factor is ")
     tline.append(start._2)
     tline.append( "Hz")
     displayArray+=tline.toString()
+    
+    val sync=alternatingSyncHunt(waveData,start._1,dataEnd-samplesPerBaud,samplesPerBaud)
     
     //var a=0
     //while (a<zcPoints.length)	{
@@ -90,13 +92,13 @@ class XPA {
   }
   
   // Hunt for a high or a low start tone
-  def startHunt (waveData : WaveData,end :Int) : Tuple3[Int,Int,String] ={
+  def startHunt (waveData : WaveData,end :Int,samplesPerBaud :Int) : Tuple3[Int,Int,String] ={
     var start=100
     // Allow up to 100 Hz
     val errorAllowance=100
     val goodSymbol=40
     while(start<end)	{
-      val ret=measureSegmentFrequency(waveData,start,waveData.samplesPerSymbol)
+      val ret=measureSegmentFrequency(waveData,start,samplesPerBaud)
       if (ret._2>goodSymbol)	{
         // Low
         val low=toneTest(ret._1,520,errorAllowance)
@@ -117,9 +119,39 @@ class XPA {
      else return (false,0)
   }
   
-  def alternatingSyncHunt (waveData:WaveData,samplesPerSym :Int,start:Int,end:Int) : Tuple2[Boolean,Int] ={
-    
-    (false,0)
+  def alternatingSyncHunt (waveData:WaveData,start:Int,end:Int,samplesPerBaud :Int) : Int ={
+    var a=start
+    // Look for a sync low (600 Hz) followed by a sync high (1120 Hz)
+    while (a<end)	{
+        val low=seekSyncLow(waveData,a,samplesPerBaud)
+        if (low!= -1)	{
+            println ("Low sync found")
+        	val high=seekSyncHigh(waveData,a+samplesPerBaud,samplesPerBaud)
+        	if (high!= -1) return (a)
+        }
+    	a=a+100
+    }
+    (-1)
   }
+  
+  def seekSyncLow (waveData:WaveData,start:Int,samplesPerBaud :Int) : Int = 	{
+    val thigh=measureSegmentFrequency(waveData,start,start+samplesPerBaud)
+    if (thigh._2>40)	{
+    	val htone=toneTest(thigh._1,600,100)
+        if (htone._1==true) return (htone._2)
+        }
+    (-1)
+  }
+  
+  def seekSyncHigh (waveData:WaveData,start:Int,samplesPerBaud :Int) : Int = 	{
+    val thigh=measureSegmentFrequency(waveData,start,start+samplesPerBaud)
+    if (thigh._2>40)	{
+    	val htone=toneTest(thigh._1,1120,100)
+        if (htone._1==true) return (htone._2)
+        }
+    (-1)
+  }
+  
+  
 
 }

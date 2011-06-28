@@ -10,5 +10,4 @@ class WaveData {
   var bytesPerFrame=0
   var rawList:ArrayBuffer[Int]=new ArrayBuffer() 
   var correctionFactor=0
-  var samplesPerSymbol=0
 }
