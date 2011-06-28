@@ -50,6 +50,7 @@ class XPA {
     var b=startPoint+1
     // Find the distances between the peaks in the selected segment    
     while (b<(startPoint+len))	{
+      // TODO : Stop this line from going out of bounds
       if ((waveData.rawList(b)>waveData.rawList(b-1))&&(waveData.rawList(b)>waveData.rawList(b+1)))	{
         peakArray+=(b-lastPeak)
         lastPeak=b
@@ -100,6 +101,7 @@ class XPA {
     while(start<end)	{
       val ret=measureSegmentFrequency(waveData,start,samplesPerBaud)
       if (ret._2>goodSymbol)	{
+        // TODO : Work out why toneTest only ever returns 1378 Hz       
         // Low
         val low=toneTest(ret._1,520,errorAllowance)
         if (low._1==true) return (start,(low._2),"Low Start Tone Found")
