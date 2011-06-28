@@ -7,18 +7,21 @@ class XPA {
   
   def decode (waveData : WaveData) : List[String]=	{
     var displayArray:ArrayBuffer[String]=new ArrayBuffer() 
-    val samplesPerSym=samplesPerSymbol(20,waveData.sampleRate)
-    val dataEnd=waveData.rawList.length-samplesPerSym
+    waveData.samplesPerSymbol=samplesPerSymbol(20,waveData.sampleRate)
+    val dataEnd=waveData.rawList.length-waveData.samplesPerSymbol
     displayArray+="XPA Decode"
     // Hunt for a start tone
-    val start=startHunt(waveData,samplesPerSym,dataEnd)
-    
+    val start=startHunt(waveData,dataEnd)
+    // No start tone found
     if (start._1== -1)	{
       displayArray+=start._3
       return (displayArray.toList)
     }
-    
     displayArray+=start._3
+    // Set the correction factor
+    waveData.correctionFactor=start._2
+    // Set the samples per symbol
+    
     
     var tline=new StringBuilder("")
     tline.append("Error correction factor is ")
@@ -87,13 +90,13 @@ class XPA {
   }
   
   // Hunt for a high or a low start tone
-  def startHunt (waveData : WaveData,samplesPerSym :Int,end :Int) : Tuple3[Int,Int,String] ={
+  def startHunt (waveData : WaveData,end :Int) : Tuple3[Int,Int,String] ={
     var start=100
     // Allow up to 100 Hz
     val errorAllowance=100
     val goodSymbol=40
     while(start<end)	{
-      val ret=measureSegmentFrequency(waveData,start,samplesPerSym)
+      val ret=measureSegmentFrequency(waveData,start,waveData.samplesPerSymbol)
       if (ret._2>goodSymbol)	{
         // Low
         val low=toneTest(ret._1,520,errorAllowance)
@@ -112,6 +115,11 @@ class XPA {
   def toneTest (freq : Int,tone : Int,errorAllow : Int) : Tuple2[Boolean,Int] =	{
     if ((freq>(tone-errorAllow))&&(freq<(tone+errorAllow))) return (true,(freq-tone))
      else return (false,0)
+  }
+  
+  def alternatingSyncHunt (waveData:WaveData,samplesPerSym :Int,start:Int,end:Int) : Tuple2[Boolean,Int] ={
+    
+    (false,0)
   }
 
 }
