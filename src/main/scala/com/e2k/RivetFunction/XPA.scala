@@ -73,12 +73,11 @@ class XPA {
       }
        b=b+1
      }
-   (measureFrequencyMean(peakArray,waveData.sampleRate)) 
+   (measureFrequencyMean(peakArray.toList,waveData.sampleRate)) 
   }
     
-  // Finds the mean value in the peakArray
-  def measureFrequencyMean (peakArray:ArrayBuffer[Int],sampleFreq : Double): Int =	{
-    // Find the mean value of the peakArray ArrayBuffer
+  // Finds the mean value in the peakArray List
+  def measureFrequencyMean (peakArray:List[Int],sampleFreq : Double): Int =	{
     var total=0
     for (peak <- peakArray)	
         total+=peak   
