@@ -68,7 +68,7 @@ class XPA {
     while (b<endPoint)	{
       // TODO : Stop this line from going out of bounds
       if ((waveData.rawList(b)>waveData.rawList(b-1))&&(waveData.rawList(b)>waveData.rawList(b+1)))	{
-        peakArray+=(b-lastPeak)
+        if (lastPeak>0) peakArray+=(b-lastPeak)
         lastPeak=b
       }
        b=b+1
@@ -80,12 +80,9 @@ class XPA {
   def measureFrequencyMean (peakArray:ArrayBuffer[Int],sampleFreq : Double): Int =	{
     // Find the mean value of the peakArray ArrayBuffer
     var total=0
-    var i=1
-    while(i<peakArray.length) {       
-        total=total+peakArray(i)     
-    	i=i+1
-    }
-    ((getFrequency((total/i),sampleFreq)))
+    for (peak <- peakArray)	
+        total+=peak   
+    ((getFrequency((total/peakArray.length),sampleFreq)))
   }  
   
   
