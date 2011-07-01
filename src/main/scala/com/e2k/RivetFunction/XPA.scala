@@ -24,6 +24,7 @@ class XPA {
     waveData.correctionFactor=start._2
 
     var tline=new StringBuilder("")
+    var dline=new StringBuilder("")
     tline.append("Error correction factor is ")
     tline.append(start._2)
     tline.append( "Hz")
@@ -43,18 +44,24 @@ class XPA {
       
       var it=0
       var pos=0
+      var lastChar=""
       while (pos<(dataEnd-samplesPerBaud))	{
         pos=sync+(it*samplesPerBaud)
         val nxt=measureSegmentFrequency(waveData,pos,samplesPerBaud)
+        val char=getChar(nxt,lastChar)
+        dline.append(char)
+        lastChar=char
         tline.clear
-        tline.append("Tone "+it+" is "+nxt+ " Hz at sample point "+pos)
+        tline.append("Received Tone "+nxt+"Hz maps to "+char+" at position "+pos)
         displayArray+=tline.toString()
         it=it+1
       }
+      
    
     }
     else displayArray+="No sync found !"
-      
+    
+    displayArray+=dline.toString()
   
     (displayArray.toList)
   }
@@ -102,7 +109,7 @@ class XPA {
   
   // Return the number of samples per baud
   def samplesPerSymbol (dbaud : Double,sampleFreq : Double) : Int={
-    (sampleFreq/dbaud).toInt*2
+    ((sampleFreq/dbaud).toInt)*2
   }
   
   // Hunt for a high or a low start tone
@@ -110,7 +117,6 @@ class XPA {
     var start=0
     // Allow up to 100 Hz
     val errorAllowance=100
-    val goodSymbol=40
     while(start<end)	{
       val ret=measureSegmentFrequency(waveData,start,(samplesPerBaud*1))
       val low=toneTest(ret,520,errorAllowance)
@@ -118,7 +124,7 @@ class XPA {
       // High
       val high=toneTest(ret,1280,errorAllowance)
       if (high._1==true) return (start,(high._2),"High Start Tone Found")
-      start=start+10
+      start=start+1
     }
     // We have a problem
     (-1,-1,"Error ! No Start tone found.")
@@ -147,7 +153,7 @@ class XPA {
   // Check a slot for the 600 Hz low sync tone
   def seekSyncLow (waveData:WaveData,start:Int,samplesPerBaud :Int) : Int = 	{
     val thigh=measureSegmentFrequency(waveData,start,samplesPerBaud)
-    val htone=toneTest(thigh,600,50)
+    val htone=toneTest(thigh,600,15)
     if (htone._1==true) return (htone._2) 
     (-1)
   }
@@ -155,9 +161,35 @@ class XPA {
   // Check a slot for the 1120 Hz high sync tone
   def seekSyncHigh (waveData:WaveData,start:Int,samplesPerBaud :Int) : Int = 	{
     val thigh=measureSegmentFrequency(waveData,start,samplesPerBaud)
-    val htone=toneTest(thigh,1120,50)
+    val htone=toneTest(thigh,1120,15)
     if (htone._1==true) return (htone._2)  
     (-1)
+  }
+  
+  // Return a String for a tone
+  def getChar (tone : Int,prevChar : String) : String =	{
+    val lw=21
+    if ((tone>(520-lw))&&(tone<(520+lw))) return ("Start Low")
+    else if ((tone>(600-lw))&&(tone<(600+lw))) return ("Sync Low")
+    else if ((tone>(680-lw))&&(tone<(680+lw))) return ("Group Space")
+    else if ((tone>(720-lw))&&(tone<(720+lw))) return ("End Tone")
+    else if ((tone>(760-lw))&&(tone<(760+lw))) return ("0")
+    else if ((tone>(800-lw))&&(tone<(800+lw))) return ("1")
+    else if ((tone>(840-lw))&&(tone<(840+lw))) return ("2")
+    else if ((tone>(880-lw))&&(tone<(880+lw))) return ("3")
+    else if ((tone>(920-lw))&&(tone<(920+lw))) return ("4")
+    else if ((tone>(960-lw))&&(tone<(960+lw))) return ("5")
+    else if ((tone>(1000-lw))&&(tone<(1000+lw))) return ("6")
+    else if ((tone>(1040-lw))&&(tone<(1040+lw))) return ("7")
+    else if ((tone>(1080-lw))&&(tone<(1080+lw))) return ("8")
+    else if ((tone>(1120-lw))&&(tone<(1120+lw)))	{
+      if (prevChar=="Sync Low") return ("Sync High")
+      else return ("9")
+    }
+    else if ((tone>(1160-lw))&&(tone<(1160+lw))) return ("Message Start")
+    else if ((tone>(1200-lw))&&(tone<(1200+lw))) return ("Repeat")
+    else if ((tone>(1280-lw))&&(tone<(1280+lw))) return ("Start High")
+    else return ("UNID")
   }
   
   
