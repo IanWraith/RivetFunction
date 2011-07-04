@@ -8,8 +8,8 @@ class XPA {
   def decode (waveData : WaveData) : List[String]=	{
     var displayArray:ArrayBuffer[String]=new ArrayBuffer() 
     // Set the samples per symbol
-    // XPA is 20 baud
-    val samplesPerBaud=samplesPerSymbol(20,waveData.sampleRate)
+    // XPA is 10 baud
+    val samplesPerBaud=samplesPerSymbol(10,waveData.sampleRate)
     val dataEnd=waveData.rawList.length-samplesPerBaud
     displayArray+="XPA Decode"
     // Hunt for a start tone
@@ -45,8 +45,21 @@ class XPA {
       var it=0
       var pos=0
       var lastChar=""
-      while (pos<(dataEnd-samplesPerBaud))	{
+      while (pos<=(dataEnd-samplesPerBaud))	{
         pos=sync+(it*samplesPerBaud)
+        
+        // Debug code
+        if (pos==37005)	{
+	        var xline=new StringBuilder("")
+            var x=pos
+            while (x<(37005+samplesPerBaud))	{
+              xline.append(waveData.rawList(x))
+              xline.append(",")
+              x=x+1
+            }
+	        displayArray+=xline.toString
+        	}
+        
         val nxt=measureSegmentFrequency(waveData,pos,samplesPerBaud)
         val char=getChar(nxt,lastChar)
         dline.append(char)
@@ -70,7 +83,9 @@ class XPA {
   def measureSegmentFrequency (waveData : WaveData , startPoint : Int ,len : Int): Int=	{
 	var peakArray:ArrayBuffer[Int]=new ArrayBuffer() 
     var lastPeak=0
+    // was +1
     var b=startPoint+1
+    // was -2
     val endPoint=(startPoint+len)-2    
     // Find the distances between the peaks in the selected segment    
     while (b<endPoint)	{
@@ -81,7 +96,6 @@ class XPA {
       }
        b=b+1
      }
-	
    (measureFrequencyMean(peakArray.toList,waveData.sampleRate,waveData.correctionFactor)) 
   }
 
@@ -109,7 +123,7 @@ class XPA {
   
   // Return the number of samples per baud
   def samplesPerSymbol (dbaud : Double,sampleFreq : Double) : Int={
-    ((sampleFreq/dbaud).toInt)*2
+    (sampleFreq/dbaud).toInt
   }
   
   // Hunt for a high or a low start tone
@@ -154,16 +168,20 @@ class XPA {
   def seekSyncLow (waveData:WaveData,start:Int,samplesPerBaud :Int) : Int = 	{
     val thigh=measureSegmentFrequency(waveData,start,samplesPerBaud)
     val htone=toneTest(thigh,600,15)
-    if (htone._1==true) return (htone._2) 
-    (-1)
+    if (htone._1==true)	{
+      return (htone._2) 
+    }
+    else (-1)
   }
   
   // Check a slot for the 1120 Hz high sync tone
   def seekSyncHigh (waveData:WaveData,start:Int,samplesPerBaud :Int) : Int = 	{
     val thigh=measureSegmentFrequency(waveData,start,samplesPerBaud)
     val htone=toneTest(thigh,1120,15)
-    if (htone._1==true) return (htone._2)  
-    (-1)
+    if (htone._1==true)	{
+      return (htone._2)  
+    }
+    else (-1)
   }
   
   // Return a String for a tone
