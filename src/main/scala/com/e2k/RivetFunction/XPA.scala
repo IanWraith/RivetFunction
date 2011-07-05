@@ -13,7 +13,7 @@ class XPA {
     val dataEnd=waveData.rawList.length-samplesPerBaud
     displayArray+="XPA Decode"
     // Hunt for a start tone
-    val start=startHunt(waveData,dataEnd,samplesPerBaud)
+    val start=startHunt(waveData,dataEnd.toInt,samplesPerBaud.toInt)
     // No start tone found
     if (start._1== -1)	{
       displayArray+=start._3
@@ -31,46 +31,12 @@ class XPA {
     tline.append(" found at position ")
     tline.append(start._1)
     displayArray+=tline.toString()
-    
-    tline.clear
-    tline.append("File ends at position "+dataEnd)
-    displayArray+=tline.toString()
-    
-    val sync=alternatingSyncHunt(waveData,start._1,(dataEnd-samplesPerBaud-samplesPerBaud),samplesPerBaud)
+    val sync=alternatingSyncHunt(waveData,start._1,(dataEnd.toInt-(samplesPerBaud.toInt*2)),samplesPerBaud.toInt)
     tline.clear
     if (sync > 0 )	{
-      tline.append("Sync found at position "+ sync);
+      tline.append("Sync found at position "+ sync.toInt);
       displayArray+=tline.toString()
-      
-      var it=0
-      var pos=0
-      var lastChar=""
-      while (pos<=(dataEnd-samplesPerBaud))	{
-        pos=sync+(it*samplesPerBaud)
-        
-        // Debug code
-        if (pos==37005)	{
-	        var xline=new StringBuilder("")
-            var x=pos
-            while (x<(37005+samplesPerBaud))	{
-              xline.append(waveData.rawList(x))
-              xline.append(",")
-              x=x+1
-            }
-	        displayArray+=xline.toString
-        	}
-        
-        val nxt=measureSegmentFrequency(waveData,pos,samplesPerBaud)
-        val char=getChar(nxt,lastChar)
-        dline.append(char)
-        lastChar=char
-        tline.clear
-        tline.append("Received Tone "+nxt+"Hz maps to "+char+" at position "+pos)
-        displayArray+=tline.toString()
-        it=it+1
-      }
-      
-   
+      displayArray+=getMessage(waveData,sync,dataEnd,samplesPerBaud)
     }
     else displayArray+="No sync found !"
     
@@ -83,9 +49,7 @@ class XPA {
   def measureSegmentFrequency (waveData : WaveData , startPoint : Int ,len : Int): Int=	{
 	var peakArray:ArrayBuffer[Int]=new ArrayBuffer() 
     var lastPeak=0
-    // was +1
     var b=startPoint+1
-    // was -2
     val endPoint=(startPoint+len)-2    
     // Find the distances between the peaks in the selected segment    
     while (b<endPoint)	{
@@ -108,13 +72,9 @@ class XPA {
   
   // Finds the mean value in the peakArray List
   def measureFrequencyMean (peakList:List[Int],sampleFreq : Double,correctionFactor:Int): Int =	{
-    var total=0.0
-    for (peak <- peakList)	{
-        total+=peak   
-    }    
+    val total:Double=peakList.sum
     (getFrequency((total/peakList.length),sampleFreq,correctionFactor))
   }  
-  
   
   // Convert the mean distance between peaks into a frequency measurement
   def getFrequency (dmean : Double,sampleFreq : Double,correctionFactor : Int) : Int={
@@ -122,8 +82,8 @@ class XPA {
   }
   
   // Return the number of samples per baud
-  def samplesPerSymbol (dbaud : Double,sampleFreq : Double) : Int={
-    (sampleFreq/dbaud).toInt
+  def samplesPerSymbol (dbaud : Double,sampleFreq : Double) : Double={
+    sampleFreq/dbaud
   }
   
   // Hunt for a high or a low start tone
@@ -187,10 +147,10 @@ class XPA {
   // Return a String for a tone
   def getChar (tone : Int,prevChar : String) : String =	{
     val lw=21
-    if ((tone>(520-lw))&&(tone<(520+lw))) return ("Start Low")
-    else if ((tone>(600-lw))&&(tone<(600+lw))) return ("Sync Low")
-    else if ((tone>(680-lw))&&(tone<(680+lw))) return ("Group Space")
-    else if ((tone>(720-lw))&&(tone<(720+lw))) return ("End Tone")
+    if ((tone>(520-lw))&&(tone<(520+lw))) return ("Start Low ")
+    else if ((tone>(600-lw))&&(tone<(600+lw))) return ("Sync Low ")
+    else if ((tone>(680-lw))&&(tone<(680+lw))) return ("Group Space ")
+    else if ((tone>(720-lw))&&(tone<(720+lw))) return ("End Tone ")
     else if ((tone>(760-lw))&&(tone<(760+lw))) return ("0")
     else if ((tone>(800-lw))&&(tone<(800+lw))) return ("1")
     else if ((tone>(840-lw))&&(tone<(840+lw))) return ("2")
@@ -201,15 +161,32 @@ class XPA {
     else if ((tone>(1040-lw))&&(tone<(1040+lw))) return ("7")
     else if ((tone>(1080-lw))&&(tone<(1080+lw))) return ("8")
     else if ((tone>(1120-lw))&&(tone<(1120+lw)))	{
-      if (prevChar=="Sync Low") return ("Sync High")
+      if (prevChar=="Sync Low ") return ("Sync High ")
       else return ("9")
     }
-    else if ((tone>(1160-lw))&&(tone<(1160+lw))) return ("Message Start")
-    else if ((tone>(1200-lw))&&(tone<(1200+lw))) return ("Repeat")
-    else if ((tone>(1280-lw))&&(tone<(1280+lw))) return ("Start High")
-    else return ("UNID")
+    else if ((tone>(1160-lw))&&(tone<(1160+lw))) return ("Message Start ")
+    else if ((tone>(1200-lw))&&(tone<(1200+lw))) return ("Repeat ")
+    else if ((tone>(1280-lw))&&(tone<(1280+lw))) return ("Start High ")
+    else return ("UNID ")
   }
   
-  
+  def getMessage (waveData:WaveData,sync:Double,dataEnd:Double,samplesPerBaud:Double) : String =	{
+    var tline=new StringBuilder("")
+    var it=0
+    var pos=0.0
+    var lastChar=""
+    while (pos<=(dataEnd-samplesPerBaud))	{
+        pos=sync+(it*samplesPerBaud)        
+        val nxt=measureSegmentFrequency(waveData,pos.toInt,samplesPerBaud.toInt)
+        val char=getChar(nxt,lastChar)
+        if ((lastChar.length>1)&&(char.length==1)) tline.append("\n")
+        else if (char.length>1) tline.append("\n")
+        lastChar=char
+        tline.append(char)
+        if (char=="UNID ") tline.append(" ("+nxt+" Hz) at position "+pos.toInt);
+        it=it+1
+      }
+    tline.toString
+  }
 
 }
