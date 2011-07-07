@@ -22,6 +22,15 @@ class XPA {
     displayArray+=start._3
     // Set the correction factor
     waveData.correctionFactor=start._2
+    
+    val bins=doDCT(waveData,9455,samplesPerBaud.toInt)
+    var bline=new StringBuilder("")
+    for (bin<-bins)	{
+      bline.append(bin)
+      bline.append("<br>")
+    }
+    displayArray+=bline.toString
+    
 
     var tline=new StringBuilder("")
     var dline=new StringBuilder("")
@@ -187,6 +196,24 @@ class XPA {
         it=it+1
       }
     tline.toString
+  }
+  
+  def doDCT (waveData:WaveData,start:Int,length:Int) : List[Double]=	{
+    var transformData:ArrayBuffer[Double]=new ArrayBuffer(length)
+    var bin=0
+    var k=0
+    // Do the DCT
+    while (bin<length)	{
+      k=0
+      transformData.append(0.0)
+      while (k<length)	{
+        val arg=bin*Math.Pi*k/length;
+        transformData(bin)+=(waveData.rawList(k+start))*Math.cos(arg);
+        k=k+1
+      }
+      bin=bin+1
+    }
+    (transformData.toList)
   }
 
 }
