@@ -22,16 +22,6 @@ class XPA {
     displayArray+=start._3
     // Set the correction factor
     waveData.correctionFactor=start._2
-    
-    val bins=doDCT(waveData,9455,samplesPerBaud.toInt)
-    var bline=new StringBuilder("")
-    for (bin<-bins)	{
-      bline.append(bin)
-      bline.append("<br>")
-    }
-    displayArray+=bline.toString
-    
-
     var tline=new StringBuilder("")
     var dline=new StringBuilder("")
     tline.append("Error correction factor is ")
@@ -186,7 +176,7 @@ class XPA {
     var lastChar=""
     while (pos<=(dataEnd-samplesPerBaud))	{
         pos=sync+(it*samplesPerBaud)        
-        val nxt=measureSegmentFrequency(waveData,pos.toInt,samplesPerBaud.toInt)
+        val nxt=doDCT(waveData,pos.toInt,samplesPerBaud.toInt,samplesPerBaud)
         val char=getChar(nxt,lastChar)
         if ((lastChar.length>1)&&(char.length==1)) tline.append("\n")
         else if (char.length>1) tline.append("\n")
@@ -198,22 +188,35 @@ class XPA {
     tline.toString
   }
   
-  def doDCT (waveData:WaveData,start:Int,length:Int) : List[Double]=	{
-    var transformData:ArrayBuffer[Double]=new ArrayBuffer(length)
+  // Run a Discrete Cosine Transformation on a section of the waveData raw data and return a frequency in Hz
+  def doDCT (waveData:WaveData,start:Int,length:Int,samplesPerBaud:Double) : Int=	{
     var bin=0
     var k=0
+    var highval=0.0
+    var highbin= -1
+    var transformData=0.0
     // Do the DCT
     while (bin<length)	{
       k=0
-      transformData.append(0.0)
+      transformData=0.0
       while (k<length)	{
-        val arg=bin*Math.Pi*k/length;
-        transformData(bin)+=(waveData.rawList(k+start))*Math.cos(arg);
+        transformData+=(waveData.rawList(k+start))*Math.cos(bin*Math.Pi*k/length);
         k=k+1
       }
+      // Check if this is the highest value so far
+      if (transformData>highval)	{
+          highval=transformData
+          highbin=bin
+        }
       bin=bin+1
     }
-    (transformData.toList)
+    if (highbin== -1) return (-1)
+     else (calcFreqFromBin(highbin,waveData.sampleRate,samplesPerBaud,waveData.correctionFactor))
+  }
+  
+  // Calculate the frequency in hertz from the DCT bin with the most power in
+  def calcFreqFromBin (bin:Int,sampleFreq:Double,samplesPerBaud:Double,correctionFactor:Int) : Int={
+    ((((sampleFreq/samplesPerBaud)*bin)/2.0).toInt-correctionFactor)
   }
 
 }
