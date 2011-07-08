@@ -9,24 +9,39 @@ object App {
   
   def main(args : Array[String]) {
     
-    // args[0] - System type
-    // args[1] - File name
+    // args[0] - System Type
+    // args[1] - Input File Name
+    // args[2] - Output File Name
     
     var displayLines=List[String]() 
-    val ret=readWavFile("C:\\temp\\xpa_short.wav")
+    val ret=readWavFile("C:\\temp\\xpa_longish.wav")
+    //val ret=readWavFile(args(1))
     val waveData=ret._2
     if (ret._1==true) println ("Error :" + ret._3)
-    // XPA
-    val system="XPA"
-    if (system=="XPA")	{
+    
+    
+    //val system=args(1)
+    val system="XPA10"
+    
+    // System choices
+    // XPA 10 baud
+    if (system=="XPA10")	{
       val xpa=new XPA
-      displayLines=xpa.decode(ret._2)
+      displayLines=xpa.decode(ret._2,10)
       }
+    // XPA 20 baud
+    else if (system=="XPA20")	{
+      val xpa=new XPA
+      displayLines=xpa.decode(ret._2,20)
+      }
+    else {
+      println ("Error ! Unknown System")
+      return()
+    }
    
     // Display the resulting decode info contained in a List
     displayLines.foreach (displayLines => println(displayLines)) 
-   
-    println("Done Processing !")
+     
   }
   
   // Read in a WAV file and return a WaveData class

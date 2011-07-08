@@ -4,15 +4,16 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.StringBuilder
 
 class XPA {
-  
-  def decode (waveData : WaveData) : List[String]=	{
+    
+  def decode (waveData:WaveData,baudRate:Int) : List[String]=	{
     var displayArray:ArrayBuffer[String]=new ArrayBuffer() 
     // Set the samples per symbol
-    // XPA is 10 baud
-    val samplesPerBaud=samplesPerSymbol(10,waveData.sampleRate)
+    // XPA
+    val samplesPerBaud=samplesPerSymbol(baudRate,waveData.sampleRate)
     val dataEnd=waveData.rawList.length-samplesPerBaud
     displayArray+="XPA Decode"
     // Hunt for a start tone
+    println("Hunting for a start tone")
     val start=startHunt(waveData,dataEnd.toInt,samplesPerBaud.toInt)
     // No start tone found
     if (start._1== -1)	{
@@ -20,6 +21,7 @@ class XPA {
       return (displayArray.toList)
     }
     displayArray+=start._3
+    println("Start tone found")
     // Set the correction factor
     waveData.correctionFactor=start._2
     var tline=new StringBuilder("")
@@ -30,11 +32,13 @@ class XPA {
     tline.append(" found at position ")
     tline.append(start._1)
     displayArray+=tline.toString()
+    println("Trying to acquire syncronisation")
     val sync=alternatingSyncHunt(waveData,start._1,(dataEnd.toInt-(samplesPerBaud.toInt*2)),samplesPerBaud.toInt)
     tline.clear
     if (sync > 0 )	{
       tline.append("Sync found at position "+ sync.toInt);
       displayArray+=tline.toString()
+      println("Syncronisation Acquired")
       displayArray+=getMessage(waveData,sync,dataEnd,samplesPerBaud)
     }
     else displayArray+="No sync found !"
@@ -88,8 +92,8 @@ class XPA {
   // Hunt for a high or a low start tone
   def startHunt (waveData : WaveData,end :Int,samplesPerBaud :Int) : Tuple3[Int,Int,String] ={
     var start=0
-    // Allow up to 100 Hz
-    val errorAllowance=100
+    // Allow up to 50 Hz
+    val errorAllowance=50
     while(start<end)	{
       val ret=measureSegmentFrequency(waveData,start,(samplesPerBaud*1))
       val low=toneTest(ret,520,errorAllowance)
@@ -184,6 +188,8 @@ class XPA {
         tline.append(char)
         if (char=="UNID ") tline.append(" ("+nxt+" Hz) at position "+pos.toInt);
         it=it+1
+        println("Decoding character "+it)
+        
       }
     tline.toString
   }
