@@ -65,6 +65,9 @@
     </dependency>
   </dependencies>
 
+  <organization>
+  	<name>Enigma2000</name>
+  </organization>
   <build>
     <sourceDirectory>src/main/scala</sourceDirectory>
     <testSourceDirectory>src/test/scala</testSourceDirectory>
