@@ -4,6 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.AudioInputStream
 import java.io.File
+import java.io.FileWriter
 
 object App {
   
@@ -12,16 +13,17 @@ object App {
     // args[0] - System Type
     // args[1] - Input File Name
     // args[2] - Output File Name
-    
+        
     var displayLines=List[String]() 
-    val ret=readWavFile("C:\\temp\\xpa_longish.wav")
-    //val ret=readWavFile(args(1))
+    //val ret=readWavFile("C:\\temp\\xpa_short.wav")
+    val ret=readWavFile(args(1))
     val waveData=ret._2
-    if (ret._1==true) println ("Error :" + ret._3)
-    
-    
-    //val system=args(1)
-    val system="XPA10"
+    if (ret._1==true)	{
+      println ("Error :" + ret._3)
+      return()
+    }
+    val system=args(0)
+    //val system="XPA10"
     
     // System choices
     // XPA 10 baud
@@ -41,6 +43,10 @@ object App {
    
     // Display the resulting decode info contained in a List
     displayLines.foreach (displayLines => println(displayLines)) 
+    
+    // TODO : Fix a problem which occurs if there is no ARGS(2)
+    // Write the decode to the selected text file
+    if (args(2)!=null) fileWrite(args(2),displayLines)
      
   }
   
@@ -117,6 +123,13 @@ object App {
     var a=0
     for (a<-0 until 1024) initialBlock(a)=inBlock(a)
     (count,initialBlock)
+  }
+  
+  // Write a list of strings to a selected file
+  def fileWrite (fileName:String,displayLines:List[String])	{
+    val fw=new FileWriter(fileName)
+    for (line<-displayLines) fw.write(line) 
+    fw.close()
   }
   
 
