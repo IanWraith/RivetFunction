@@ -113,9 +113,9 @@ class XPA {
      else return (false,0)
   }
   
+  // Look for a sync low (600 Hz) followed by a sync high (1120 Hz)
   def alternatingSyncHunt (waveData:WaveData,start:Int,end:Int,samplesPerBaud :Int) : Int ={
     var a=start
-    // Look for a sync low (600 Hz) followed by a sync high (1120 Hz)
     while (a<end)	{
         val low=seekSyncLow(waveData,a,samplesPerBaud)
         if (low!= -1)	{
@@ -150,10 +150,10 @@ class XPA {
   // Return a String for a tone
   def getChar (tone : Int,prevChar : String) : String =	{
     val lw=21
-    if ((tone>(520-lw))&&(tone<(520+lw))) return ("Start Low ")
-    else if ((tone>(600-lw))&&(tone<(600+lw))) return ("Sync Low ")
-    else if ((tone>(680-lw))&&(tone<(680+lw))) return ("Group Space ")
-    else if ((tone>(720-lw))&&(tone<(720+lw))) return ("End Tone ")
+    if ((tone>(520-lw))&&(tone<(520+lw))) return ("Start Low")
+    else if ((tone>(600-lw))&&(tone<(600+lw))) return ("Sync Low")
+    else if ((tone>(680-lw))&&(tone<(680+lw))) return (" ")
+    else if ((tone>(720-lw))&&(tone<(720+lw))) return ("\nEnd Tone")
     else if ((tone>(760-lw))&&(tone<(760+lw))) return ("0")
     else if ((tone>(800-lw))&&(tone<(800+lw))) return ("1")
     else if ((tone>(840-lw))&&(tone<(840+lw))) return ("2")
@@ -164,32 +164,54 @@ class XPA {
     else if ((tone>(1040-lw))&&(tone<(1040+lw))) return ("7")
     else if ((tone>(1080-lw))&&(tone<(1080+lw))) return ("8")
     else if ((tone>(1120-lw))&&(tone<(1120+lw)))	{
-      if (prevChar=="Sync Low ") return ("Sync High ")
+      if (prevChar=="Sync Low") return ("Sync High")
       else return ("9")
     }
-    else if ((tone>(1160-lw))&&(tone<(1160+lw))) return ("Message Start ")
-    else if ((tone>(1200-lw))&&(tone<(1200+lw))) return ("Repeat ")
-    else if ((tone>(1280-lw))&&(tone<(1280+lw))) return ("Start High ")
-    else return ("UNID ")
+    else if ((tone>(1160-lw))&&(tone<(1160+lw))) return ("\nMessage Start")
+    else if ((tone>(1200-lw))&&(tone<(1200+lw))) return ("R")
+    else if ((tone>(1280-lw))&&(tone<(1280+lw))) return ("Start High")
+    else return ("UNID")
   }
   
+  // Decode the XPA message
   def getMessage (waveData:WaveData,sync:Double,dataEnd:Double,samplesPerBaud:Double) : String =	{
     var tline=new StringBuilder("")
     var it=0
     var pos=0.0
     var lastChar=""
+    var groupCount=0
     while (pos<=(dataEnd-samplesPerBaud))	{
         pos=sync+(it*samplesPerBaud)        
         val nxt=doDCT(waveData,pos.toInt,samplesPerBaud.toInt,samplesPerBaud)
         val char=getChar(nxt,lastChar)
-        if ((lastChar.length>1)&&(char.length==1)) tline.append("\n")
-        else if (char.length>1) tline.append("\n")
+        // If a Repeat is signalled display the last character
+        // If not display this character
+        if (char=="R")  tline.append(lastChar)
+        else if ((char !="Sync High")&&(char !="Sync Low")) tline.append(char)
+        // If we get two End Tones in a row then stop decoding
+        if ((char=="R")&&(lastChar=="\nEnd Tone")) return (tline.toString)
+        // Hunt for 6666622662626
+        if (tline.lastIndexOf("6666622662626")==(tline.length-13))	{
+          tline.append("\n")
+          groupCount=0
+        }
+        // Hunt for 4444444444
+        if (tline.lastIndexOf("4444444444")==(tline.length-10))	{
+          tline.append("\n")
+          groupCount=0
+        }
+        // Count the group spaces
+        if (char==" ") groupCount=groupCount+1
+        // After 10 group spaces add a line break
+        if (groupCount==10)	{
+          groupCount=0
+          tline.append("\n")
+        }
+        // Record the last character
         lastChar=char
-        tline.append(char)
-        if (char=="UNID ") tline.append(" ("+nxt+" Hz) at position "+pos.toInt);
+        // Display Unknowns
+        if (char=="UNID") tline.append(" ("+nxt+" Hz) at position "+pos.toInt);
         it=it+1
-        println("Decoding character "+it)
-        
       }
     tline.toString
   }
