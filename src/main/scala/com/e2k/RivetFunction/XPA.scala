@@ -11,7 +11,7 @@ class XPA {
     // XPA
     val samplesPerBaud=samplesPerSymbol(baudRate,waveData.sampleRate)
     val dataEnd=waveData.rawList.length-samplesPerBaud
-    displayArray+="XPA Decode"
+    displayArray+="XPA Decode\n"
     // Hunt for a start tone
     println("Hunting for a start tone")
     val start=startHunt(waveData,dataEnd.toInt,samplesPerBaud.toInt)
@@ -25,26 +25,22 @@ class XPA {
     // Set the correction factor
     waveData.correctionFactor=start._2
     var tline=new StringBuilder("")
-    var dline=new StringBuilder("")
     tline.append("Error correction factor is ")
     tline.append(start._2)
     tline.append( "Hz")
     tline.append(" found at position ")
-    tline.append(start._1)
+    tline.append(start._1+"\n")
     displayArray+=tline.toString()
     println("Trying to acquire syncronisation")
     val sync=alternatingSyncHunt(waveData,start._1,(dataEnd.toInt-(samplesPerBaud.toInt*2)),samplesPerBaud.toInt)
     tline.clear
     if (sync > 0 )	{
-      tline.append("Sync found at position "+ sync.toInt);
+      tline.append("Sync found at position "+sync.toInt+"\n");
       displayArray+=tline.toString()
       println("Syncronisation Acquired")
       displayArray+=getMessage(waveData,sync,dataEnd,samplesPerBaud)
     }
-    else displayArray+="No sync found !"
-    
-    displayArray+=dline.toString()
-  
+    else displayArray+="No sync found !\n"
     (displayArray.toList)
   }
   
@@ -56,8 +52,7 @@ class XPA {
     val endPoint=(startPoint+len)-2    
     // Find the distances between the peaks in the selected segment    
     while (b<endPoint)	{
-      // TODO : Stop this line from going out of bounds
-      if (peakDetect(waveData.rawList(b-1),waveData.rawList(b),waveData.rawList(b+1),waveData.rawList(b+2))==true)	{
+        if (peakDetect(waveData.rawList(b-1),waveData.rawList(b),waveData.rawList(b+1),waveData.rawList(b+2))==true)	{
       	if (lastPeak>0) peakArray+=(b-lastPeak)
         lastPeak=b
       }
@@ -97,14 +92,14 @@ class XPA {
     while(start<end)	{
       val ret=measureSegmentFrequency(waveData,start,(samplesPerBaud*1))
       val low=toneTest(ret,520,errorAllowance)
-      if (low._1==true) return (start,(low._2),"Low Start Tone Found")
+      if (low._1==true) return (start,(low._2),"Low Start Tone Found\n")
       // High
       val high=toneTest(ret,1280,errorAllowance)
-      if (high._1==true) return (start,(high._2),"High Start Tone Found")
+      if (high._1==true) return (start,(high._2),"High Start Tone Found\n")
       start=start+1
     }
     // We have a problem
-    (-1,-1,"Error ! No Start tone found.")
+    (-1,-1,"Error ! No Start tone found.\n")
   }
   
   // Test for a specific tone
@@ -210,7 +205,7 @@ class XPA {
         // Record the last character
         lastChar=char
         // Display Unknowns
-        if (char=="UNID") tline.append(" ("+nxt+" Hz) at position "+pos.toInt);
+        if (char=="UNID") tline.append(" ("+nxt+" Hz) at position "+pos.toInt+"\n");
         it=it+1
       }
     tline.toString
@@ -231,7 +226,7 @@ class XPA {
         transformData+=(waveData.rawList(k+start))*Math.cos(bin*Math.Pi*k/length);
         k=k+1
       }
-      // Check if this is the highest value so far
+      // Check if this is the highest bin value so far
       if (transformData>highval)	{
           highval=transformData
           highbin=bin
