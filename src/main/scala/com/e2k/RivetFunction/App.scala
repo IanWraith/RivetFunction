@@ -16,6 +16,13 @@ object App {
         
     var displayLines=List[String]() 
     //val ret=readWavFile("C:\\temp\\xpa_short.wav")
+    
+    // Check for to few arguments
+    if (args.length<2)	{
+      println("Error !\nYou must tell the program which system you are decoding and give it a WAV file to work on")
+      return()
+    }
+    // Get the WAV file
     val ret=readWavFile(args(1))
     val waveData=ret._2
     if (ret._1==true)	{
@@ -23,16 +30,16 @@ object App {
       return()
     }
     val system=args(0)
-    //val system="XPA10"
+    //val system="XPA-10"
     
     // System choices
     // XPA 10 baud
-    if (system=="XPA10")	{
+    if (system=="XPA-10")	{
       val xpa=new XPA
       displayLines=xpa.decode(ret._2,10)
       }
     // XPA 20 baud
-    else if (system=="XPA20")	{
+    else if (system=="XPA-20")	{
       val xpa=new XPA
       displayLines=xpa.decode(ret._2,20)
       }
@@ -44,9 +51,9 @@ object App {
     // Display the resulting decode info contained in a List
     displayLines.foreach (displayLines => println(displayLines)) 
     
-    // TODO : Fix a problem which occurs if there is no ARGS(2)
-    // Write the decode to the selected text file
-    if (args(2)!=null) fileWrite(args(2),displayLines)
+    // Write the decode to the selected text file 
+    // If the user has said there is one
+    if (args.length>2) fileWrite(args(2),displayLines)
      
   }
   
