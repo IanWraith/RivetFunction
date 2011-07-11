@@ -75,5 +75,10 @@ trait MFSK {
     ((((sampleFreq/samplesPerBaud)*bin)/2.0).toInt-correctionFactor)
   }
 
+  // Test for a specific tone
+  def toneTest (freq:Int,tone:Int,errorAllow:Int) : Tuple2[Boolean,Int] =	{
+    if ((freq>(tone-errorAllow))&&(freq<(tone+errorAllow))) return (true,(freq-tone))
+     else return (false,0)
+  }
 
 }

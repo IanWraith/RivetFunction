@@ -62,12 +62,6 @@ class XPA extends MFSK {
     (-1,-1,"Error ! No Start tone found.\n")
   }
   
-  // Test for a specific tone
-  def toneTest (freq : Int,tone : Int,errorAllow : Int) : Tuple2[Boolean,Int] =	{
-    if ((freq>(tone-errorAllow))&&(freq<(tone+errorAllow))) return (true,(freq-tone))
-     else return (false,0)
-  }
-  
   // Look for a sync low (600 Hz) followed by a sync high (1120 Hz)
   def alternatingSyncHunt (waveData:WaveData,start:Int,end:Int,samplesPerBaud :Int) : Int ={
     var a=start
