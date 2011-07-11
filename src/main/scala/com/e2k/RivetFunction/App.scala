@@ -13,25 +13,33 @@ object App {
     // args[0] - System Type
     // args[1] - Input File Name
     // args[2] - Output File Name
-        
-    var displayLines=List[String]() 
-    //val ret=readWavFile("C:\\temp\\xpa_short.wav")
     
-    // Check for to few arguments
-    if (args.length<2)	{
-      println("Error !\nYou must tell the program which system you are decoding and give it a WAV file to work on")
-      return()
+    val debug=true
+    var displayLines=List[String]() 
+    var fileName=""
+    var system=""
+   
+    // If we are in debug mode define a input file and system to work on 
+    if (debug==true)	{
+    	fileName="C:\\temp\\xpa2_cuba.wav"
+    	system="XPA2-10"
+    }
+    else	{
+    	// Check for to few arguments
+    	if (args.length<2)	{
+    		println("Error !\nYou must tell the program which system you are decoding and give it a WAV file to work on")
+    		return()
+    		}
+    	fileName=args(1)
+    	system=args(0)
     }
     // Get the WAV file
-    val ret=readWavFile(args(1))
+    val ret=readWavFile(fileName)
     val waveData=ret._2
     if (ret._1==true)	{
       println ("Error :" + ret._3)
       return()
     }
-    val system=args(0)
-    //val system="XPA-10"
-    
     // System choices
     // XPA 10 baud
     if (system=="XPA-10")	{
@@ -42,6 +50,16 @@ object App {
     else if (system=="XPA-20")	{
       val xpa=new XPA
       displayLines=xpa.decode(ret._2,20)
+      }
+    // XPA2 10 baud
+    else if (system=="XPA2-10")	{
+      val xpa2=new XPA2
+      displayLines=xpa2.decode(ret._2,10)
+      }
+    // XPA2 20 baud
+    else if (system=="XPA2-20")	{
+      val xpa2=new XPA2
+      displayLines=xpa2.decode(ret._2,20)
       }
     else {
       println ("Error ! Unknown System")
