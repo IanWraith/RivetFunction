@@ -114,8 +114,9 @@ object App {
     // Decide how to handle the WAV data
     // 16 bit LE
     if ((audioStream.getFormat().isBigEndian()==false)&&(audioStream.getFormat().getSampleSizeInBits()==16)) return grabWavBlock16LE (audioStream) 
-    // 8 bit 
-    else if (audioStream.getFormat().getSampleSizeInBits()==8) return grabWavBlock8B(audioStream)
+    // 8 bit LE
+    else if ((audioStream.getFormat().isBigEndian()==false)&&(audioStream.getFormat().getSampleSizeInBits()==8)) return grabWavBlock8LE (audioStream) 
+    //else if (audioStream.getFormat().getSampleSizeInBits()==8) return grabWavBlock8B(audioStream)
     else return (0,Array(0,0))
   }
   
@@ -128,25 +129,30 @@ object App {
     var i=0
     var a=0
     for (a<-0 until 1024)	{
-      initialBlock(a)=LEconv(inBlock(i),inBlock(i+1))
+      initialBlock(a)=LEconv16(inBlock(i),inBlock(i+1))
       i=i+2
     }
     ((count/2),initialBlock)
   }
   
-  // Convert from being little endian
-  def LEconv (a : Byte , b : Byte) : Integer= 	{
+  // Convert a 16 bit value from being little endian
+  def LEconv16 (a : Byte , b : Byte) : Integer= 	{
     a&0xFF|b<<8;
   }
   
-  // Handle 8 bit WAV files
-  def grabWavBlock8B (audioStream : AudioInputStream) : Tuple2 [Int,Array[Integer]]= {
+  // Convert an 8 bit Java Byte to an Integer
+  def LEconv8 (a:Byte) : Integer=	{
+    ((a&0xff)-128)
+  }
+    
+  // Handle 8 bit LE WAV files
+  def grabWavBlock8LE (audioStream : AudioInputStream) : Tuple2 [Int,Array[Integer]]= {
     val initialBlock=new Array[Integer](1024)
     val inBlock=new Array[Byte](1024)
     val count=audioStream.read(inBlock)
-    // Have a loop convert the byte array into an int array
+    // Have a loop convert the LE byte array into an int array
     var a=0
-    for (a<-0 until 1024) initialBlock(a)=inBlock(a)
+    for (a<-0 until 1024) initialBlock(a)=LEconv8(inBlock(a))
     (count,initialBlock)
   }
   
