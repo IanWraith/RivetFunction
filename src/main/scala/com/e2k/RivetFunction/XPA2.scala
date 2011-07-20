@@ -21,16 +21,20 @@ class XPA2 extends MFSK {
     }
     displayArray+=start._3
     println("Start tone found")
-    // Set the correction factor
-    waveData.correctionFactor=start._2
+    // Double check the start tone with a DCT
+    val cstart=doDCT(waveData,start._1,samplesPerBaud.toInt,samplesPerBaud)
+    // Set the correction factor from the DCT frequency which is more accurate
+    waveData.correctionFactor=cstart-965
+    // Let the user know the correction factor
     var tline=new StringBuilder("")
     tline.append("Error correction factor is ")
-    tline.append(start._2)
+    tline.append(waveData.correctionFactor)
     tline.append( "Hz")
     tline.append(" found at position ")
     tline.append(start._1+"\n")
     displayArray+=tline.toString()
     println("Trying to acquire syncronisation")
+    // Hunt for the alternating sync tone    
     val sync=alternatingSyncHunt(waveData,start._1,(dataEnd.toInt-(samplesPerBaud.toInt*2)),samplesPerBaud.toInt)
     tline.clear
     if (sync > 0 )	{
@@ -58,35 +62,38 @@ class XPA2 extends MFSK {
     (-1,-1,"Error ! No Start tone found.\n")
   }
   
-  // TODO: Work out the XPA sync sequence
-  // Look for a sync low (1025 Hz) followed by a sync high (1025 Hz)
+  // Look for a sync low (997 Hz) followed by a sync high (1037 Hz)
   def alternatingSyncHunt (waveData:WaveData,start:Int,end:Int,samplesPerBaud :Int) : Int ={
     var a=start
     while (a<end)	{
         val low=seekSyncLow(waveData,a,samplesPerBaud)
         if (low!= -1)	{
         	val high=seekSyncHigh(waveData,(a+samplesPerBaud),samplesPerBaud)
-        	if (high!= -1) return (a)
+        	if (high!= -1)	{
+        	  val dcheck=doDCT(waveData,(a+samplesPerBaud),samplesPerBaud,samplesPerBaud)
+        	  val dtone=toneTest(dcheck,1037,10)
+        	  if (dtone._1==true) return (a)
+        	}
         }
     	a=a+1
      }
     (-1)
   }
   
-  // Check a slot for the 1025 Hz low sync tone
+  // Check a slot for the 997 Hz low sync tone
   def seekSyncLow (waveData:WaveData,start:Int,samplesPerBaud :Int) : Int = 	{
     val thigh=measureSegmentFrequency(waveData,start,samplesPerBaud)
-    val htone=toneTest(thigh,1025-waveData.correctionFactor,15)
+    val htone=toneTest(thigh,997,10)
     if (htone._1==true)	{
       return (htone._2) 
     }
     else (-1)
   }
   
-  // Check a slot for the 1025 Hz high sync tone
+  // Check a slot for the 1037 Hz high sync tone
   def seekSyncHigh (waveData:WaveData,start:Int,samplesPerBaud :Int) : Int = 	{
     val thigh=measureSegmentFrequency(waveData,start,samplesPerBaud)
-    val htone=toneTest(thigh,1025-waveData.correctionFactor,15)
+    val htone=toneTest(thigh,1037,10)
     if (htone._1==true)	{
       return (htone._2)  
     }
