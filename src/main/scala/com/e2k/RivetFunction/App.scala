@@ -61,6 +61,16 @@ object App {
       val xpa2=new XPA2
       displayLines=xpa2.decode(ret._2,20)
       }
+    // CROWD36 10 baud
+    else if (system=="CROWD36-10")	{
+      val crowd36=new CROWD36
+      displayLines=crowd36.decode(ret._2,10)
+      }
+    // CROWD36 40 baud
+    else if (system=="CROWD36-40")	{
+      val crowd36=new CROWD36
+      displayLines=crowd36.decode(ret._2,40)
+      }
     else {
       println ("Error ! Unknown System")
       return()
