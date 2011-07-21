@@ -80,5 +80,31 @@ trait MFSK {
     if ((freq>(tone-errorAllow))&&(freq<(tone+errorAllow))) return (true,(freq-tone))
      else return (false,0)
   }
+  
+  // Run a Discrete Cosine Transformation on a section of the waveData raw data and return the level
+  // of the highest frequency
+  def doDCTHighPower (waveData:WaveData,start:Int,length:Int,samplesPerBaud:Double) : Int=	{
+    var bin=0
+    var k=0
+    var highval=0.0
+    var highbin= -1
+    var transformData=0.0
+    // Do the DCT
+    while (bin<length)	{
+      k=0
+      transformData=0.0
+      while (k<length)	{
+        transformData+=(waveData.rawList(k+start))*Math.cos(bin*Math.Pi*k/length);
+        k=k+1
+      }
+      // Check if this is the highest bin value so far
+      if (transformData>highval)	{
+          highval=transformData
+          highbin=bin
+        }
+      bin=bin+1
+    }
+   return (highbin) 
+  }
 
 }
