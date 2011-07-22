@@ -21,8 +21,10 @@ object App {
    
     // If we are in debug mode define a input file and system to work on 
     if (debug==true)	{
-    	fileName="C:\\temp\\xpa2_cuba.wav"
-    	system="XPA2-10"
+    	//fileName="C:\\temp\\Danix111_CROWD36.wav"
+    	//system="CROWD36-40"
+        fileName="C:\\temp\\xpa2_paul.wav"
+        system="XPA2-8"
     }
     else	{
     	// Check for to few arguments
@@ -51,10 +53,10 @@ object App {
       val xpa=new XPA
       displayLines=xpa.decode(ret._2,20)
       }
-    // XPA2 10 baud
-    else if (system=="XPA2-10")	{
+    // XPA2 8 baud
+    else if (system=="XPA2-8")	{
       val xpa2=new XPA2
-      displayLines=xpa2.decode(ret._2,10)
+      displayLines=xpa2.decode(ret._2,8)
       }
     // XPA2 20 baud
     else if (system=="XPA2-20")	{

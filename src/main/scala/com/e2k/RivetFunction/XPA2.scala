@@ -65,18 +65,20 @@ class XPA2 extends MFSK {
   // Look for a sync low (997 Hz) followed by a sync high (1037 Hz)
   def alternatingSyncHunt (waveData:WaveData,start:Int,end:Int,samplesPerBaud :Int) : Int ={
     var a=start
-    a=1300000
+    a=140000
+    
     while (a<end)	{
         val low=seekSyncLow(waveData,a,samplesPerBaud)
         if (low!= -1)	{
         	val high=seekSyncHigh(waveData,(a+samplesPerBaud),samplesPerBaud)
         	if (high!= -1)	{
-        	  val dcheck=doDCT(waveData,(a+samplesPerBaud),samplesPerBaud,samplesPerBaud)
-        	  val dtone=toneTest(dcheck,1037,10)
-        	  if (dtone._1==true) return (a)
+        	  val thigh=doDCT(waveData,(a+samplesPerBaud),samplesPerBaud.toInt,samplesPerBaud)
+        	  println("Found tone "+thigh+" Hz at "+a);
+        	  val htone=toneTest(thigh,1037,10)
+        	  if (htone._1==true) return (a)	  
         	}
         }
-    	a=a+1
+        a=a+1
      }
     (-1)
   }
@@ -104,21 +106,21 @@ class XPA2 extends MFSK {
   // Return a String for a tone
   def getChar (tone : Int,prevChar : String) : String =	{
     val lw=10
-    if ((tone>(997-lw))&&(tone<(997+lw))) return ("Sync Low")
-    else if ((tone>(965-lw))&&(tone<(965+lw))) return (" ")
-    else if ((tone>(1037-lw))&&(tone<(1037+lw))) return ("Sync High")
-    else if ((tone>(1115-lw))&&(tone<(1115+lw))) return ("0")
-    else if ((tone>(1185-lw))&&(tone<(1185+lw))) return ("1")
-    else if ((tone>(1215-lw))&&(tone<(1215+lw))) return ("2")
-    else if ((tone>(1245-lw))&&(tone<(1245+lw))) return ("3")
-    else if ((tone>(1275-lw))&&(tone<(1275+lw))) return ("4")
-    else if ((tone>(1305-lw))&&(tone<(1305+lw))) return ("5")
-    else if ((tone>(1345-lw))&&(tone<(1345+lw))) return ("6")
-    else if ((tone>(1375-lw))&&(tone<(1375+lw))) return ("7")
-    else if ((tone>(1405-lw))&&(tone<(1405+lw))) return ("8")
-    else if ((tone>(1435-lw))&&(tone<(1435+lw))) return ("9")
-    else if ((tone>(1125-lw))&&(tone<(1125+lw))) return ("R")
-    else return ("UNID")
+    if ((tone>(965-lw))&&(tone<(965+lw))) return (" ")
+    else if ((tone>(997-lw))&&(tone<(997+lw))) return ("\nSync Low\n")
+    else if ((tone>(1037-lw))&&(tone<(1037+lw))) return ("\nSync High\n")
+    else if ((tone>(1084-lw))&&(tone<(1084+lw))) return ("R")
+    else if ((tone>(1098-lw))&&(tone<(1098+lw))) return ("0")
+    else if ((tone>(1115-lw))&&(tone<(1115+lw))) return ("1")
+    else if ((tone>(1130-lw))&&(tone<(1130+lw))) return ("2")
+    else if ((tone>(1145-lw))&&(tone<(1145+lw))) return ("3")
+    else if ((tone>(1160-lw))&&(tone<(1160+lw))) return ("4")
+    else if ((tone>(1177-lw))&&(tone<(1177+lw))) return ("5")
+    else if ((tone>(1192-lw))&&(tone<(1192+lw))) return ("6")
+    else if ((tone>(1207-lw))&&(tone<(1207+lw))) return ("7")
+    else if ((tone>(1222-lw))&&(tone<(1222+lw))) return ("8")
+    else if ((tone>(1237-lw))&&(tone<(1237+lw))) return ("9")
+    else return ("\nUNID "+tone+" Hz\n")
   }
   
   // Decode the XPA2 message
